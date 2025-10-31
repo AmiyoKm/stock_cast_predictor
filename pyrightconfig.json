@@ -1,0 +1,12 @@
+{
+	"pythonVersion": "3.12",
+	"pythonPlatform": "Linux",
+	"venvPath": "/mnt/Work/ALL/PY/projects/api_seperate",
+	"venv": ".venv",
+	"reportMissingTypeStubs": false,
+	"reportExplicitAny": false,
+	"reportUnknownVariableType": false,
+	"reportAny": false,
+	"reportUnknownMemberType": false,
+	"reportUnknownArgumentType": false
+}

@@ -1,25 +1,20 @@
+from typing import Any
 import joblib
 from keras.models import load_model
 from huggingface_hub import hf_hub_download, list_repo_files
-from typing import Dict, List, Tuple
 
-# The Hugging Face repository ID
 REPO_ID = "StockCast/seperate"
 MODELS_SUBDIR = "models"
 
-# Cache for loaded artifacts to avoid re-downloading from Hugging Face on every request
-_artifact_cache = {}
+_artifact_cache: dict[str, tuple[Any, dict[int, Any]]] = {}
 
 
-def get_available_trading_codes() -> List[str]:
+def get_available_trading_codes() -> list[str]:
     """Returns a list of all trading codes for which models are available from the Hugging Face repository."""
     try:
-        # List all files in the models subdirectory of the repository
         repo_files = list_repo_files(REPO_ID, repo_type="model")
 
-        # Extract trading codes from the file paths
-        # e.g., from "models/1JANATAMF/scaler_1JANATAMF.bin" we get "1JANATAMF"
-        trading_codes = set()
+        trading_codes: set[str] = set()
         for filepath in repo_files:
             if filepath.startswith(f"{MODELS_SUBDIR}/"):
                 parts = filepath.split("/")
@@ -27,22 +22,16 @@ def get_available_trading_codes() -> List[str]:
                     trading_codes.add(parts[1])
         return sorted(list(trading_codes))
     except Exception as e:
-        # Handle cases where the repo is not found or other API errors
         print(f"Could not fetch trading codes from Hugging Face: {e}")
         return []
 
 
 def load_stock_artifacts(
     trading_code: str,
-) -> Tuple[joblib.load, Dict[int, load_model]]:
-    """
-    Loads the scaler and LSTM models for a specific trading code from the Hugging Face repository.
-    Implements caching to avoid redundant downloads.
-    """
+) -> tuple[Any, dict[int, Any]]:
     if trading_code in _artifact_cache:
         return _artifact_cache[trading_code]
 
-    # Download the scaler
     try:
         scaler_path = hf_hub_download(
             repo_id=REPO_ID,
@@ -55,8 +44,7 @@ def load_stock_artifacts(
             f"Scaler not found for {trading_code} in {REPO_ID}. Error: {e}"
         )
 
-    # Download models for all supported horizons
-    models = {}
+    models: dict[int, Any] = {}
     horizons_to_check = [1, 3, 7]
 
     for horizon in horizons_to_check:
@@ -79,7 +67,6 @@ def load_stock_artifacts(
     if not models:
         raise FileNotFoundError(f"No models found for {trading_code} in {REPO_ID}")
 
-    # Cache the loaded artifacts
     _artifact_cache[trading_code] = (scaler, models)
 
     return scaler, models

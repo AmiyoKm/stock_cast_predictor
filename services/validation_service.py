@@ -1,10 +1,11 @@
 from fastapi import HTTPException
 from models.stock import Stock
-from config.prediction_config import MIN_HISTORY_LENGTH, SUPPORTED_HORIZONS
-from services.prediction_service import (
-    is_valid_trading_code,
-    get_available_trading_codes,
+from config.prediction_config import (
+    MIN_HISTORY_LENGTH,
+    SUPPORTED_HORIZONS,
+    SUPPORTED_MODELS,
 )
+from utils.seperate_artifacts import get_available_trading_codes as get_codes
 
 
 def validate_history_length(
@@ -18,11 +19,10 @@ def validate_history_length(
 
 
 def validate_trading_code(trading_code: str) -> None:
-
     if not is_valid_trading_code(trading_code):
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown trading code: {trading_code}. Available codes: {get_available_trading_codes()}...",
+            detail=f"Unknown trading code: {trading_code}. Available codes: {get_codes()}...",
         )
 
 
@@ -34,10 +34,21 @@ def validate_prediction_horizon(nhead: int) -> None:
         )
 
 
-def validate_prediction_request(history: list[Stock], trading_code: str) -> list[Stock]:
+def validate_model(model: str) -> None:
+    if model not in SUPPORTED_MODELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported model: {model}. Supported models: {', '.join(SUPPORTED_MODELS)}",
+        )
+
+
+def validate_prediction_request(history: list[Stock]) -> list[Stock]:
     validate_history_length(history)
-    #validate_trading_code(trading_code)`
 
     sorted_history = sorted(history, key=lambda x: x.date)
 
     return sorted_history
+
+def is_valid_trading_code(trading_code: str) -> bool:
+    available_codes = get_codes()
+    return trading_code in available_codes
