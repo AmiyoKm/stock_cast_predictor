@@ -27,7 +27,7 @@ def get_available_trading_codes() -> list[str]:
 
 
 def load_stock_artifacts(
-    trading_code: str,
+    trading_code: str
 ) -> tuple[Any, dict[int, Any]]:
     if trading_code in _artifact_cache:
         return _artifact_cache[trading_code]
@@ -45,7 +45,7 @@ def load_stock_artifacts(
         )
 
     models: dict[int, Any] = {}
-    horizons_to_check = [1, 3, 7]
+    horizons_to_check = [1, 3, 7, 15, 30]
 
     for horizon in horizons_to_check:
         model_filename = f"{MODELS_SUBDIR}/{trading_code}/lstm_{trading_code}_seq60_nahead{horizon}.keras"
@@ -55,6 +55,7 @@ def load_stock_artifacts(
                 filename=model_filename,
                 repo_type="model",
             )
+
             models[horizon] = load_model(model_path)
         except Exception:
             # It's okay if a model for a specific horizon doesn't exist.
